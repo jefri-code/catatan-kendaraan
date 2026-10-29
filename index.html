@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catatan Kendaraan</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #166534;
+      font-size: 25px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px #00000010;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 7px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input, select {
+      border: 1px solid #cbd5e1;
+      background: white;
+    }
+
+    button {
+      border: none;
+      background: #15803d;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .kendaraan {
+      border-left: 5px solid #16a34a;
+      background: #f8fafc;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .tidak-layak {
+      border-left-color: #dc2626;
+    }
+
+    .hapus {
+      background: #dc2626;
+      margin-top: 10px;
+    }
+
+    .kosong {
+      text-align: center;
+      color: #64748b;
+    }
+
+    small {
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🚛 Catatan Kendaraan</h1>
+
+    <div class="card">
+      <h3>Input Data Kendaraan</h3>
+
+      <form id="formKendaraan">
+        <label for="nopol">Nomor Polisi</label>
+        <input id="nopol" placeholder="Contoh: BG 1234 XX"
+               required maxlength="20">
+
+        <label for="nama">Nama Kendaraan</label>
+        <input id="nama" placeholder="Contoh: Truk Angkutan"
+               required maxlength="100">
+
+        <label for="status">Status Kelayakan</label>
+        <select id="status">
+          <option value="Layak">Layak</option>
+          <option value="Tidak Layak">Tidak Layak</option>
+        </select>
+
+        <button type="submit">Simpan Kendaraan</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Daftar Kendaraan</h3>
+      <div id="daftar">
+        <p class="kosong">Belum ada data kendaraan.</p>
+      </div>
+      <small>
+        Data tersimpan di browser pada perangkat ini.
+      </small>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("formKendaraan");
+    const daftar = document.getElementById("daftar");
+
+    let kendaraan = [];
+
+    try {
+      kendaraan = JSON.parse(
+        localStorage.getItem("catatanKendaraan") || "[]"
+      );
+
+      if (!Array.isArray(kendaraan)) {
+        kendaraan = [];
+      }
+    } catch {
+      kendaraan = [];
+    }
+
+    function simpanData() {
+      localStorage.setItem(
+        "catatanKendaraan",
+        JSON.stringify(kendaraan)
+      );
+    }
+
+    function tampilkanData() {
+      daftar.replaceChildren();
+
+      if (kendaraan.length === 0) {
+        const p = document.createElement("p");
+        p.className = "kosong";
+        p.textContent = "Belum ada data kendaraan.";
+        daftar.appendChild(p);
+        return;
+      }
+
+      kendaraan.forEach((item, index) => {
+        const kotak = document.createElement("div");
+        kotak.className = "kendaraan";
+
+        if (item.status === "Tidak Layak") {
+          kotak.classList.add("tidak-layak");
+        }
+
+        const judul = document.createElement("strong");
+        judul.textContent = item.nopol;
+
+        const nama = document.createElement("p");
+        nama.textContent = "Kendaraan: " + item.nama;
+
+        const status = document.createElement("p");
+        status.textContent = "Status: " + item.status;
+
+        const hapus = document.createElement("button");
+        hapus.className = "hapus";
+        hapus.textContent = "Hapus Data";
+
+        hapus.addEventListener("click", () => {
+          kendaraan.splice(index, 1);
+          simpanData();
+          tampilkanData();
+        });
+
+        kotak.append(judul, nama, status, hapus);
+        daftar.appendChild(kotak);
+      });
+    }
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const nopol = document.getElementById("nopol")
+        .value.trim().toUpperCase();
+
+      const nama = document.getElementById("nama")
+        .value.trim();
+
+      const status = document.getElementById("status").value;
+
+      if (!nopol || !nama) {
+        alert("Nomor polisi dan nama kendaraan wajib diisi.");
+        return;
+      }
+
+      kendaraan.unshift({ nopol, nama, status });
+
+      try {
+        simpanData();
+      } catch {
+        kendaraan.shift();
+        alert("Data gagal disimpan. Periksa ruang penyimpanan browser.");
+        return;
+      }
+
+      tampilkanData();
+      form.reset();
+      document.getElementById("nopol").focus();
+    });
+
+    tampilkanData();
+  </script>
+</body>
+  </html>
